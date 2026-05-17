@@ -1,8 +1,10 @@
 import { Sequelize } from "sequelize";
+import pg from "pg";
 
 const conn = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: "postgres",
+      dialectModule: pg,  
       dialectOptions: {
         ssl: {
           require: true,
@@ -17,6 +19,7 @@ const conn = process.env.DATABASE_URL
       {
         host: process.env.DB_HOST,
         dialect: "postgres",
+        dialectModule: pg,
         logging: console.log,
       },
     );
