@@ -43,7 +43,7 @@ export default class UserController {
 
       res.status(200).json({
         message: "Você está logado",
-        toke: createdUser,
+        token: createdUser,
         user,
       });
     } catch (error) {

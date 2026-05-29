@@ -17,4 +17,18 @@ router.post(
   AbsenceController.addAbsence,
 );
 
+router.get(
+  "/lecture/:lectureId",
+  checkToken,
+  checkRole(["Catequista", "Coordenador", "Admin"]),
+  AbsenceController.getAbsencesByLecture,
+);
+
+router.delete(
+  "/:studentId/:lectureId",
+  checkToken,
+  checkRole(["Catequista", "Coordenador", "Admin"]),
+  AbsenceController.removeAbsence,
+);
+
 export default router;

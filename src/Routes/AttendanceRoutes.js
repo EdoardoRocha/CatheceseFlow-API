@@ -16,5 +16,19 @@ router.post(
   validateAttendance,
   AttendanceController.addAttendance,
 );
+router.get(
+  "/lecture/:lectureId",
+  checkToken,
+  checkRole(
+    ["Catequista", "Coordenador", "Admin"],
+    AttendanceController.getAttendanceByLecture,
+  ),
+);
+router.delete(
+  "/:studentId/:lectureId",
+  checkToken,
+  checkRole(["Catequista", "Coordenador", "Admin"]),
+  AttendanceController.removeAttendance,
+);
 
 export default router;
