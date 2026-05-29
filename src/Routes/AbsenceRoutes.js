@@ -12,7 +12,7 @@ import { validateAbsence } from "../Middlewares/validateAbsence.js";
 router.post(
   "/:studentId",
   checkToken,
-  checkRole(["Catequista"]),
+  checkRole(["Catequista", "Coordenador", "Admin"]),
   validateAbsence,
   AbsenceController.addAbsence,
 );
