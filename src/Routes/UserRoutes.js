@@ -6,10 +6,11 @@ import UserController from "../Controllers/UserController.js";
 
 //Middlewares
 import { validateNewUser, validateUser } from "../Middlewares/validateUser.js";
+import checkToken from "../Middlewares/authToken.js";
 
 //Routes
 router.post("/register", validateNewUser, UserController.register);
 router.post("/login", validateUser, UserController.login);
-router.get("/:parishId", validateUser, UserController.getUsersByParisheId);
+router.get("/:parishId", checkToken, validateUser, UserController.getUsersByParisheId);
 
 export default router;
