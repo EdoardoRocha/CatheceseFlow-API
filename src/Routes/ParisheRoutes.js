@@ -10,8 +10,6 @@ import checkRole from "../Middlewares/authRole.js";
 
 router.get(
   "/",
-  checkToken,
-  checkRole(["Catequista", "Coordenador", "Admin"]),
   ParisheController.getAllParishes,
 );
 
