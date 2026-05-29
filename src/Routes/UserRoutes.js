@@ -11,6 +11,6 @@ import checkToken from "../Middlewares/authToken.js";
 //Routes
 router.post("/register", validateNewUser, UserController.register);
 router.post("/login", validateUser, UserController.login);
-router.get("/:parishId", checkToken, validateUser, UserController.getUsersByParisheId);
+router.get("/:parishId", checkToken, UserController.getUsersByParisheId);
 
 export default router;
