@@ -1,4 +1,4 @@
-import Parishe from "../Models/Parishes";
+import Parishe from "../Models/Parishes.js";
 
 export default class ParisheController {
   static async getAllParishes(req, res) {
