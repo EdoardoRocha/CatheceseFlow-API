@@ -51,4 +51,19 @@ export default class UserController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  static async getUsersByParisheId(req, res) {
+    const { parishId } = req.params;
+
+    try {
+      const users = await User.findAll({
+        where: { ParishId: parishId },
+      });
+
+      res.status(200).json(users);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: error.message });
+    }
+  }
 }

@@ -10,5 +10,6 @@ import { validateNewUser, validateUser } from "../Middlewares/validateUser.js";
 //Routes
 router.post("/register", validateNewUser, UserController.register);
 router.post("/login", validateUser, UserController.login);
+router.get("/:parishId", validateUser, UserController.getUsersByParisheId);
 
 export default router;
