@@ -24,4 +24,11 @@ router.get(
   StudentController.getStudentsByClassId,
 );
 
+router.get(
+  "/class/:classId/sacraments-report",
+  checkToken,
+  checkRole(["Coordenador", "Admin", "Catequista"]),
+  StudentController.getSacramentsReportByClass,
+);
+
 export default router;

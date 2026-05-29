@@ -12,7 +12,6 @@ import { validateAttendance } from "../Middlewares/validateAttendance.js";
 router.post(
   "/:studentId",
   checkToken,
-  checkRole(["Catequista"]),
   validateAttendance,
   AttendanceController.addAttendance,
 );

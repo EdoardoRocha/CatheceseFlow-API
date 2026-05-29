@@ -13,6 +13,8 @@ const validateNewStudent = async (req, res, next) => {
     city,
     neighborhood,
     classId,
+    has_baptism,
+    has_first_communion
   } = req.body;
 
   //validators

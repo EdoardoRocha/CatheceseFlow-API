@@ -13,6 +13,8 @@ export default class StudentController {
       city,
       neighborhood,
       classId,
+      has_baptism,
+      has_first_communion,
     } = req.body;
 
     const addressData = {
@@ -44,6 +46,8 @@ export default class StudentController {
         cpf,
         ClassId: classId,
         AddressId: correctAddressId,
+        has_baptism: has_baptism ?? false,
+        has_first_communion: has_first_communion ?? false,
       };
 
       //Now save student in class
@@ -66,6 +70,43 @@ export default class StudentController {
       const students = await Student.findAll({ where: { ClassId: id } });
 
       res.status(200).json(students);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  static async getSacramentsReportByClass(req, res) {
+    const { classId } = req.params;
+
+    try {
+      // Busca alunos sem Batismo (Trará o total e a lista de quem são)
+      const missingBaptism = await Student.findAndCountAll({
+        where: {
+          ClassId: classId,
+          has_baptism: false,
+        },
+        attributes: ["id", "name", "phone"],
+      });
+
+      const missingCommunion = await Student.findAndCountAll({
+        where: {
+          ClassId: classId,
+          has_first_communion: false,
+        },
+        attributes: ["id", "name", "phone"],
+      });
+
+      res.status(200).json({
+        baptismPending: {
+          total: missingBaptism.count,
+          students: missingBaptism.rows,
+        },
+        firstCommunionPending: {
+          total: missingCommunion.count,
+          students: missingCommunion.rows,
+        },
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: error.message });

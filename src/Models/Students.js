@@ -13,6 +13,16 @@ const Student = conn.define('Students', {
     name: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    has_baptism: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    has_first_communion: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     }
 });
 
