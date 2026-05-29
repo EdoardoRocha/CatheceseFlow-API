@@ -34,6 +34,7 @@ import AddressRoutes from './src/Routes/AdressRoutes.js';
 import LectureRoutes from './src/Routes/LectureRoutes.js';
 import AbsenceRoutes from './src/Routes/AbsenceRoutes.js';
 import AttendanceRoutes from './src/Routes/AttendanceRoutes.js';
+import ParisheRoutes from './src/Routes/ParisheRoutes.js';
 
 app.use('/api/v1/users', UserRoutes);
 app.use('/api/v1/classes', ClassRoutes);
@@ -42,6 +43,7 @@ app.use('/api/v1/addresses', AddressRoutes);
 app.use('/api/v1/lectures', LectureRoutes);
 app.use('/api/v1/absences', AbsenceRoutes);
 app.use('/api/v1/attendances', AttendanceRoutes);
+app.use('/api/v1/parishes', ParisheRoutes);
 
 conn
     .sync()
