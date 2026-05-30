@@ -20,8 +20,8 @@ router.get(
   checkToken,
   checkRole(
     ["Catequista", "Coordenador", "Admin"],
-    AttendanceController.getAttendanceByLecture,
   ),
+  AttendanceController.getAttendanceByLecture,
 );
 router.delete(
   "/:studentId/:lectureId",
