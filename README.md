@@ -321,7 +321,10 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
 ```json
 {
   "name": "Carlos Eduardo Paz",
-  "phone": "85999998888",
+  "phones": [
+    { "number": "85999998888", "label": "Mãe" },
+    { "number": "85888887777", "label": "Aluno" }
+  ],
   "cpf": "12345678901",
   "birth_date": "2015-03-12",
   "father_name": "João da Silva",
@@ -340,7 +343,9 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
 
 * **Regras de Validação**:
 * Apenas `name` e `classId` são obrigatórios.
-* `phone`, `cpf`, `birth_date`, `father_name`, `mother_name` e endereço são opcionais.
+* `phones`, `cpf`, `birth_date`, `father_name`, `mother_name` e endereço são opcionais.
+* `phones` é um array de objetos `{ number, label? }`, com no máximo 5 itens.
+* O campo legado `phone` (string) ainda é aceito para compatibilidade; prefira `phones`.
 * `birth_date`, quando enviado, deve estar no formato `AAAA-MM-DD`.
 * Previne duplicidade: Se `cpf` for informado, não pode existir outro aluno com o mesmo `cpf` na mesma `classId`.
 * A turma (`classId`) deve existir no sistema e pertencer à mesma paróquia do usuário que submete a requisição.
@@ -354,7 +359,12 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
   "student": {
     "id": 12,
     "name": "Carlos Eduardo Paz",
+    "phones": [
+      { "id": 1, "number": "85999998888", "label": "Mãe" },
+      { "id": 2, "number": "85888887777", "label": "Aluno" }
+    ],
     "phone": "85999998888",
+    "phoneSummary": "Mãe: 85999998888 · Aluno: 85888887777",
     "cpf": "12345678901",
     "birth_date": "2015-03-12",
     "father_name": "João da Silva",
@@ -380,7 +390,12 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
   {
     "id": 12,
     "name": "Carlos Eduardo Paz",
+    "phones": [
+      { "id": 1, "number": "85999998888", "label": "Mãe" },
+      { "id": 2, "number": "85888887777", "label": "Aluno" }
+    ],
     "phone": "85999998888",
+    "phoneSummary": "Mãe: 85999998888 · Aluno: 85888887777",
     "cpf": "12345678901",
     "birth_date": "2015-03-12",
     "father_name": "João da Silva",

@@ -3,6 +3,7 @@ import User from "./Users.js";
 import Lecture from "./Lectures.js";
 import Parishe from "./Parishes.js";
 import Student from "./Students.js";
+import StudentPhone from "./StudentPhones.js";
 import Address from "./Address.js";
 import Attendance from "./Attendances.js";
 import Absence from "./Absences.js";
@@ -37,6 +38,9 @@ Student.hasMany(Absence);
 
 Student.belongsTo(Class);
 Class.hasMany(Student);
+
+Student.hasMany(StudentPhone, { as: "phones", foreignKey: "StudentId" });
+StudentPhone.belongsTo(Student, { foreignKey: "StudentId" });
 
 Lecture.belongsTo(Class);
 Class.hasMany(Lecture);

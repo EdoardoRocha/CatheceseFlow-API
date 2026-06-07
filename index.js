@@ -11,6 +11,7 @@ import Parishe from './src/Models/Parishes.js';
 import Class from './src/Models/Class.js';
 import Lecture from './src/Models/Lectures.js';
 import Student from './src/Models/Students.js';
+import StudentPhone from './src/Models/StudentPhones.js';
 import Absence from './src/Models/Absences.js';
 import Attendance from './src/Models/Attendances.js';
 import Address from './src/Models/Address.js';
