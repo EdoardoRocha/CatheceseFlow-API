@@ -323,19 +323,26 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
   "name": "Carlos Eduardo Paz",
   "phone": "85999998888",
   "cpf": "12345678901",
+  "birth_date": "2015-03-12",
+  "father_name": "João da Silva",
+  "mother_name": "Maria da Silva",
   "road": "Rua das Flores",
   "house_number": 450,
   "code": "61760000",
   "city": "Cascavel",
   "neighborhood": "Centro",
-  "classId": 2
+  "classId": 2,
+  "has_baptism": false,
+  "has_first_communion": false
 }
 
 ```
 
 * **Regras de Validação**:
-* Todos os dados pessoais e os componentes do endereço são obrigatórios.
-* Previne duplicidade: Um aluno não pode ser reinserido caso já exista um registro contendo o mesmo `cpf` associado àquela exata `classId`.
+* Apenas `name` e `classId` são obrigatórios.
+* `phone`, `cpf`, `birth_date`, `father_name`, `mother_name` e endereço são opcionais.
+* `birth_date`, quando enviado, deve estar no formato `AAAA-MM-DD`.
+* Previne duplicidade: Se `cpf` for informado, não pode existir outro aluno com o mesmo `cpf` na mesma `classId`.
 * A turma (`classId`) deve existir no sistema e pertencer à mesma paróquia do usuário que submete a requisição.
 
 
@@ -349,6 +356,9 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
     "name": "Carlos Eduardo Paz",
     "phone": "85999998888",
     "cpf": "12345678901",
+    "birth_date": "2015-03-12",
+    "father_name": "João da Silva",
+    "mother_name": "Maria da Silva",
     "ClassId": 2,
     "AddressId": 5,
     "createdAt": "2026-05-16T23:15:00.000Z"
@@ -372,6 +382,9 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
     "name": "Carlos Eduardo Paz",
     "phone": "85999998888",
     "cpf": "12345678901",
+    "birth_date": "2015-03-12",
+    "father_name": "João da Silva",
+    "mother_name": "Maria da Silva",
     "ClassId": 2,
     "AddressId": 5
   }

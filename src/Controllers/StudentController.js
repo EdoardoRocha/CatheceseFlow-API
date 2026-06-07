@@ -1,6 +1,23 @@
 import Student from "../Models/Students.js";
 import Address from "../Models/Address.js";
 
+function trimOrNull(value) {
+  if (value == null) return null;
+  const s = String(value).trim();
+  return s === "" ? null : s;
+}
+
+function hasCompleteAddress({ road, house_number, code, city, neighborhood }) {
+  return (
+    trimOrNull(road) &&
+    house_number != null &&
+    String(house_number).trim() !== "" &&
+    trimOrNull(code) &&
+    trimOrNull(city) &&
+    trimOrNull(neighborhood)
+  );
+}
+
 export default class StudentController {
   static async createStudent(req, res) {
     const {
@@ -15,42 +32,56 @@ export default class StudentController {
       classId,
       has_baptism,
       has_first_communion,
+      birth_date,
+      father_name,
+      mother_name,
     } = req.body;
 
-    const addressData = {
-      road,
-      code,
-      house_number,
-      city,
-      neighborhood,
-    };
-
     try {
-      //Check if address exist
-      const addressExist = await Address.findOne({
-        where: { road, code, house_number, city, neighborhood },
-      });
+      let correctAddressId = null;
 
-      let correctAddressId;
-      if (!addressExist) {
-        //Save first Address
-        const address = await Address.create(addressData);
+      if (
+        hasCompleteAddress({
+          road,
+          house_number,
+          code,
+          city,
+          neighborhood,
+        })
+      ) {
+        const addressData = {
+          road: trimOrNull(road),
+          code: trimOrNull(code),
+          house_number: Number(house_number),
+          city: trimOrNull(city),
+          neighborhood: trimOrNull(neighborhood),
+        };
 
-        correctAddressId = address.id;
-      } else {
-        correctAddressId = addressExist.id;
+        const addressExist = await Address.findOne({
+          where: addressData,
+        });
+
+        if (!addressExist) {
+          const address = await Address.create(addressData);
+          correctAddressId = address.id;
+        } else {
+          correctAddressId = addressExist.id;
+        }
       }
+
       const studentData = {
-        name,
-        phone,
-        cpf,
+        name: String(name).trim(),
+        phone: trimOrNull(phone),
+        cpf: trimOrNull(cpf),
+        birth_date: birth_date || null,
+        father_name: trimOrNull(father_name),
+        mother_name: trimOrNull(mother_name),
         ClassId: classId,
         AddressId: correctAddressId,
         has_baptism: has_baptism ?? false,
         has_first_communion: has_first_communion ?? false,
       };
 
-      //Now save student in class
       const student = await Student.create(studentData);
 
       res.status(201).json({
@@ -80,31 +111,31 @@ export default class StudentController {
     const { classId } = req.params;
 
     try {
-      // Busca alunos sem Batismo (Trará o total e a lista de quem são)
-      const missingBaptism = await Student.findAndCountAll({
-        where: {
-          ClassId: classId,
-          has_baptism: false,
-        },
-        attributes: ["id", "name", "phone"],
+      const students = await Student.findAll({
+        where: { ClassId: classId },
       });
 
-      const missingCommunion = await Student.findAndCountAll({
-        where: {
-          ClassId: classId,
-          has_first_communion: false,
-        },
-        attributes: ["id", "name", "phone"],
-      });
+      const baptismPending = students.filter((s) => !s.has_baptism);
+      const firstCommunionPending = students.filter(
+        (s) => !s.has_first_communion,
+      );
 
       res.status(200).json({
         baptismPending: {
-          total: missingBaptism.count,
-          students: missingBaptism.rows,
+          total: baptismPending.length,
+          students: baptismPending.map((s) => ({
+            id: s.id,
+            name: s.name,
+            phone: s.phone,
+          })),
         },
         firstCommunionPending: {
-          total: missingCommunion.count,
-          students: missingCommunion.rows,
+          total: firstCommunionPending.length,
+          students: firstCommunionPending.map((s) => ({
+            id: s.id,
+            name: s.name,
+            phone: s.phone,
+          })),
         },
       });
     } catch (error) {
