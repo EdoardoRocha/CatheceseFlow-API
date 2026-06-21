@@ -1,6 +1,7 @@
 import Student from "../Models/Students.js";
 import StudentPhone from "../Models/StudentPhones.js";
 import Address from "../Models/Address.js";
+import Class from "../Models/Class.js";
 
 function trimOrNull(value) {
   if (value == null) return null;
@@ -55,15 +56,34 @@ function formatPhoneSummary(phones) {
     .join(" · ");
 }
 
+function extractAddressFields(plain) {
+  const address = plain.Address ?? plain.address ?? {};
+  return {
+    road: trimOrNull(plain.road ?? address.road),
+    house_number:
+      plain.house_number != null && String(plain.house_number).trim() !== ""
+        ? Number(plain.house_number)
+        : address.house_number != null
+          ? Number(address.house_number)
+          : null,
+    code: trimOrNull(plain.code ?? address.code),
+    city: trimOrNull(plain.city ?? address.city),
+    neighborhood: trimOrNull(plain.neighborhood ?? address.neighborhood),
+  };
+}
+
 function mapStudentResponse(student) {
   const plain = student.toJSON ? student.toJSON() : student;
   const phones = resolveStudentPhones(plain);
+  const addressFields = extractAddressFields(plain);
 
   return {
     ...plain,
+    ...addressFields,
     phones,
     phone: phones[0]?.number ?? null,
     phoneSummary: formatPhoneSummary(phones),
+    address: addressFields,
   };
 }
 
@@ -78,90 +98,195 @@ function hasCompleteAddress({ road, house_number, code, city, neighborhood }) {
   );
 }
 
+async function resolveAddressId({ road, house_number, code, city, neighborhood }) {
+  if (
+    !hasCompleteAddress({
+      road,
+      house_number,
+      code,
+      city,
+      neighborhood,
+    })
+  ) {
+    return null;
+  }
+
+  const addressData = {
+    road: trimOrNull(road),
+    code: trimOrNull(code),
+    house_number: Number(house_number),
+    city: trimOrNull(city),
+    neighborhood: trimOrNull(neighborhood),
+  };
+
+  const addressExist = await Address.findOne({ where: addressData });
+  if (!addressExist) {
+    const address = await Address.create(addressData);
+    return address.id;
+  }
+
+  return addressExist.id;
+}
+
+async function syncStudentPhones(studentId, normalizedPhones) {
+  await StudentPhone.destroy({ where: { StudentId: studentId } });
+
+  if (normalizedPhones.length > 0) {
+    await StudentPhone.bulkCreate(
+      normalizedPhones.map((entry) => ({
+        number: entry.number,
+        label: entry.label,
+        StudentId: studentId,
+      })),
+    );
+  }
+}
+
+async function findStudentWithDetails(studentId) {
+  return Student.findByPk(studentId, {
+    include: [
+      { model: StudentPhone, as: "phones" },
+      { model: Address },
+      { model: Class, attributes: ["id", "ParishId"] },
+    ],
+  });
+}
+
+async function assertStudentParishAccess(studentId, parishId, res) {
+  const student = await Student.findByPk(studentId, {
+    include: [{ model: Class, attributes: ["id", "ParishId"] }],
+  });
+
+  if (!student) {
+    res.status(404).json({ message: "Estudante não encontrado." });
+    return null;
+  }
+
+  if (student.Class.ParishId !== parishId) {
+    res.status(403).json({
+      message: "Você não tem permissão para acessar este estudante.",
+    });
+    return null;
+  }
+
+  return student;
+}
+
+function buildStudentPayload(body, classId, addressId) {
+  const {
+    name,
+    cpf,
+    has_baptism,
+    has_first_communion,
+    birth_date,
+    father_name,
+    mother_name,
+  } = body;
+
+  return {
+    name: String(name).trim(),
+    phone: null,
+    cpf: trimOrNull(cpf),
+    birth_date: birth_date || null,
+    father_name: trimOrNull(father_name),
+    mother_name: trimOrNull(mother_name),
+    ClassId: classId,
+    AddressId: addressId,
+    has_baptism: has_baptism ?? false,
+    has_first_communion: has_first_communion ?? false,
+  };
+}
+
 export default class StudentController {
   static async createStudent(req, res) {
     const {
-      name,
-      cpf,
       road,
       house_number,
       code,
       city,
       neighborhood,
       classId,
-      has_baptism,
-      has_first_communion,
-      birth_date,
-      father_name,
-      mother_name,
     } = req.body;
 
     try {
-      let correctAddressId = null;
-
-      if (
-        hasCompleteAddress({
-          road,
-          house_number,
-          code,
-          city,
-          neighborhood,
-        })
-      ) {
-        const addressData = {
-          road: trimOrNull(road),
-          code: trimOrNull(code),
-          house_number: Number(house_number),
-          city: trimOrNull(city),
-          neighborhood: trimOrNull(neighborhood),
-        };
-
-        const addressExist = await Address.findOne({
-          where: addressData,
-        });
-
-        if (!addressExist) {
-          const address = await Address.create(addressData);
-          correctAddressId = address.id;
-        } else {
-          correctAddressId = addressExist.id;
-        }
-      }
+      const correctAddressId = await resolveAddressId({
+        road,
+        house_number,
+        code,
+        city,
+        neighborhood,
+      });
 
       const normalizedPhones = normalizePhones(req.body);
-
-      const studentData = {
-        name: String(name).trim(),
-        phone: null,
-        cpf: trimOrNull(cpf),
-        birth_date: birth_date || null,
-        father_name: trimOrNull(father_name),
-        mother_name: trimOrNull(mother_name),
-        ClassId: classId,
-        AddressId: correctAddressId,
-        has_baptism: has_baptism ?? false,
-        has_first_communion: has_first_communion ?? false,
-      };
+      const studentData = buildStudentPayload(
+        req.body,
+        classId,
+        correctAddressId,
+      );
 
       const student = await Student.create(studentData);
+      await syncStudentPhones(student.id, normalizedPhones);
 
-      if (normalizedPhones.length > 0) {
-        await StudentPhone.bulkCreate(
-          normalizedPhones.map((entry) => ({
-            number: entry.number,
-            label: entry.label,
-            StudentId: student.id,
-          })),
-        );
-      }
-
-      const created = await Student.findByPk(student.id, {
-        include: [{ model: StudentPhone, as: "phones" }],
-      });
+      const created = await findStudentWithDetails(student.id);
 
       res.status(201).json({
         message: "Estudante adicionado com sucesso!",
         student: mapStudentResponse(created),
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  static async getStudentById(req, res) {
+    const { studentId } = req.params;
+
+    try {
+      const allowed = await assertStudentParishAccess(
+        studentId,
+        req.user.ParishId,
+        res,
+      );
+      if (!allowed) return;
+
+      const student = await findStudentWithDetails(studentId);
+      res.status(200).json(mapStudentResponse(student));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  static async updateStudent(req, res) {
+    const { studentId } = req.params;
+    const student = req.student;
+    const { road, house_number, code, city, neighborhood } = req.body;
+
+    try {
+      const correctAddressId = await resolveAddressId({
+        road,
+        house_number,
+        code,
+        city,
+        neighborhood,
+      });
+
+      const normalizedPhones = normalizePhones(req.body);
+      const studentData = buildStudentPayload(
+        req.body,
+        student.ClassId,
+        correctAddressId,
+      );
+
+      await student.update(studentData);
+      await syncStudentPhones(student.id, normalizedPhones);
+
+      const updated = await findStudentWithDetails(student.id);
+
+      res.status(200).json({
+        message: "Estudante atualizado com sucesso!",
+        student: mapStudentResponse(updated),
       });
     } catch (error) {
       console.error(error);

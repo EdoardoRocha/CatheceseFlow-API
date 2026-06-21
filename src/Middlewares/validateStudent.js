@@ -1,52 +1,89 @@
+import { Op } from "sequelize";
 import Class from "../Models/Class.js";
 import Student from "../Models/Students.js";
 
 const MAX_PHONES = 5;
 const MAX_PHONE_LENGTH = 20;
 
+function validateName(name, res) {
+  if (!name || !String(name).trim()) {
+    res.status(400).json({ message: "Nome do estudante é obrigatório." });
+    return false;
+  }
+  return true;
+}
+
+function validateBirthDate(birth_date, res) {
+  if (birth_date && !/^\d{4}-\d{2}-\d{2}$/.test(String(birth_date))) {
+    res
+      .status(400)
+      .json({ message: "Data de nascimento inválida. Use o formato AAAA-MM-DD." });
+    return false;
+  }
+  return true;
+}
+
+function validatePhones(phones, res) {
+  if (phones == null) return true;
+
+  if (!Array.isArray(phones)) {
+    res.status(400).json({ message: "O campo phones deve ser um array." });
+    return false;
+  }
+
+  const filledPhones = phones.filter((entry) => {
+    const number = entry?.number ?? entry?.phone;
+    return number != null && String(number).trim() !== "";
+  });
+
+  if (filledPhones.length > MAX_PHONES) {
+    res.status(400).json({
+      message: `É permitido cadastrar no máximo ${MAX_PHONES} telefones por aluno.`,
+    });
+    return false;
+  }
+
+  for (const entry of filledPhones) {
+    const number = String(entry?.number ?? entry?.phone ?? "").trim();
+    if (number.length > MAX_PHONE_LENGTH) {
+      res.status(400).json({
+        message: `Cada telefone deve ter no máximo ${MAX_PHONE_LENGTH} caracteres.`,
+      });
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function loadStudentForParish(studentId, parishId, res) {
+  const student = await Student.findByPk(studentId, {
+    include: [{ model: Class, attributes: ["id", "ParishId"] }],
+  });
+
+  if (!student) {
+    res.status(404).json({ message: "Estudante não encontrado." });
+    return null;
+  }
+
+  if (student.Class.ParishId !== parishId) {
+    res.status(403).json({
+      message: "Você não tem permissão para alterar este estudante.",
+    });
+    return null;
+  }
+
+  return student;
+}
+
 const validateNewStudent = async (req, res, next) => {
   const { name, cpf, classId, birth_date, phones } = req.body;
 
-  if (!name || !String(name).trim())
-    return res
-      .status(400)
-      .json({ message: "Nome do estudante é obrigatório." });
-
+  if (!validateName(name, res)) return;
   if (!classId)
     return res.status(400).json({ message: "A turma é obrigatória." });
-
-  if (birth_date && !/^\d{4}-\d{2}-\d{2}$/.test(String(birth_date)))
-    return res
-      .status(400)
-      .json({ message: "Data de nascimento inválida. Use o formato AAAA-MM-DD." });
-
-  if (phones != null) {
-    if (!Array.isArray(phones)) {
-      return res
-        .status(400)
-        .json({ message: "O campo phones deve ser um array." });
-    }
-
-    const filledPhones = phones.filter((entry) => {
-      const number = entry?.number ?? entry?.phone;
-      return number != null && String(number).trim() !== "";
-    });
-
-    if (filledPhones.length > MAX_PHONES) {
-      return res.status(400).json({
-        message: `É permitido cadastrar no máximo ${MAX_PHONES} telefones por aluno.`,
-      });
-    }
-
-    for (const entry of filledPhones) {
-      const number = String(entry?.number ?? entry?.phone ?? "").trim();
-      if (number.length > MAX_PHONE_LENGTH) {
-        return res.status(400).json({
-          message: `Cada telefone deve ter no máximo ${MAX_PHONE_LENGTH} caracteres.`,
-        });
-      }
-    }
-  }
+  if (!validateBirthDate(birth_date, res)) return;
+  if (!validatePhones(phones, res)) return;
 
   const cpfTrimmed = cpf != null ? String(cpf).trim() : "";
   if (cpfTrimmed) {
@@ -77,4 +114,38 @@ const validateNewStudent = async (req, res, next) => {
   next();
 };
 
-export { validateNewStudent };
+const validateUpdateStudent = async (req, res, next) => {
+  const { name, cpf, birth_date, phones } = req.body;
+  const { studentId } = req.params;
+
+  if (!validateName(name, res)) return;
+  if (!validateBirthDate(birth_date, res)) return;
+  if (!validatePhones(phones, res)) return;
+
+  const student = await loadStudentForParish(
+    studentId,
+    req.user.ParishId,
+    res,
+  );
+  if (!student) return;
+
+  const cpfTrimmed = cpf != null ? String(cpf).trim() : "";
+  if (cpfTrimmed) {
+    const studentExist = await Student.findOne({
+      where: {
+        cpf: cpfTrimmed,
+        ClassId: student.ClassId,
+        id: { [Op.ne]: student.id },
+      },
+    });
+    if (studentExist)
+      return res
+        .status(409)
+        .json({ message: "Esse estudante já existe nesta turma!" });
+  }
+
+  req.student = student;
+  next();
+};
+
+export { validateNewStudent, validateUpdateStudent };

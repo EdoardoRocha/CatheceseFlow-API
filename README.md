@@ -377,6 +377,60 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
 
 ```
 
+#### **Buscar Aluno por ID (para edição)**
+
+* **Método**: `GET`
+* **Rota**: `/student/:studentId` *(Ex: `/api/v1/students/student/12`)*
+* **Autenticação**: Obrigatória (`Bearer <JWT_TOKEN>`).
+* **Cargos Permitidos**: `Admin`, `Coordenador`, `Catequista`.
+* **Resposta de Sucesso (200 OK)**:
+
+```json
+{
+  "id": 12,
+  "name": "Carlos Eduardo Paz",
+  "phones": [
+    { "id": 1, "number": "85999998888", "label": "Mãe" }
+  ],
+  "cpf": "12345678901",
+  "birth_date": "2015-03-12",
+  "father_name": "João da Silva",
+  "mother_name": "Maria da Silva",
+  "road": "Rua das Flores",
+  "house_number": 450,
+  "code": "61760000",
+  "city": "Cascavel",
+  "neighborhood": "Centro",
+  "ClassId": 2,
+  "AddressId": 5,
+  "has_baptism": false,
+  "has_first_communion": false
+}
+```
+
+#### **Atualizar Aluno**
+
+* **Método**: `PUT`
+* **Rota**: `/student/:studentId` *(Ex: `/api/v1/students/student/12`)*
+* **Autenticação**: Obrigatória (`Bearer <JWT_TOKEN>`).
+* **Cargos Permitidos**: `Admin`, `Coordenador`, `Catequista`.
+* **Payload Esperado (JSON)**: mesmo formato do create, **sem** `classId` (a turma não muda).
+* **Regras de Validação**: mesmas do create, exceto CPF duplicado que ignora o próprio aluno.
+* **Resposta de Sucesso (200 OK)**:
+
+```json
+{
+  "message": "Estudante atualizado com sucesso!",
+  "student": {
+    "id": 12,
+    "name": "Carlos Eduardo Paz",
+    "phones": [{ "id": 1, "number": "85999998888", "label": "Mãe" }],
+    "ClassId": 2,
+    "AddressId": 5
+  }
+}
+```
+
 #### **Buscar Todos os Alunos Pertencentes a uma Turma**
 
 * **Método**: `GET`
