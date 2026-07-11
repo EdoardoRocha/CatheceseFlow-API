@@ -26,6 +26,10 @@ const Student = conn.define("Students", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   has_baptism: {
     type: DataTypes.BOOLEAN,
     allowNull: false,

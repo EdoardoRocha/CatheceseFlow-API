@@ -329,6 +329,7 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
   "birth_date": "2015-03-12",
   "father_name": "João da Silva",
   "mother_name": "Maria da Silva",
+  "description": "Aluno com dificuldade de atenção; preferir lugares na frente.",
   "road": "Rua das Flores",
   "house_number": 450,
   "code": "61760000",
@@ -343,7 +344,7 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
 
 * **Regras de Validação**:
 * Apenas `name` e `classId` são obrigatórios.
-* `phones`, `cpf`, `birth_date`, `father_name`, `mother_name` e endereço são opcionais.
+* `phones`, `cpf`, `birth_date`, `father_name`, `mother_name`, `description` e endereço são opcionais.
 * `phones` é um array de objetos `{ number, label? }`, com no máximo 5 itens.
 * O campo legado `phone` (string) ainda é aceito para compatibilidade; prefira `phones`.
 * `birth_date`, quando enviado, deve estar no formato `AAAA-MM-DD`.
@@ -369,6 +370,7 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
     "birth_date": "2015-03-12",
     "father_name": "João da Silva",
     "mother_name": "Maria da Silva",
+    "description": "Aluno com dificuldade de atenção; preferir lugares na frente.",
     "ClassId": 2,
     "AddressId": 5,
     "createdAt": "2026-05-16T23:15:00.000Z"
@@ -396,6 +398,7 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
   "birth_date": "2015-03-12",
   "father_name": "João da Silva",
   "mother_name": "Maria da Silva",
+  "description": "Aluno com dificuldade de atenção; preferir lugares na frente.",
   "road": "Rua das Flores",
   "house_number": 450,
   "code": "61760000",
@@ -454,6 +457,7 @@ O sistema implementa Controle de Acesso Baseado em Funções (RBAC). Os cargos m
     "birth_date": "2015-03-12",
     "father_name": "João da Silva",
     "mother_name": "Maria da Silva",
+    "description": "Aluno com dificuldade de atenção; preferir lugares na frente.",
     "ClassId": 2,
     "AddressId": 5
   }

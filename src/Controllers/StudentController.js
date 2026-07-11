@@ -181,6 +181,7 @@ function buildStudentPayload(body, classId, addressId) {
     birth_date,
     father_name,
     mother_name,
+    description,
   } = body;
 
   return {
@@ -190,6 +191,7 @@ function buildStudentPayload(body, classId, addressId) {
     birth_date: birth_date || null,
     father_name: trimOrNull(father_name),
     mother_name: trimOrNull(mother_name),
+    description: trimOrNull(description),
     ClassId: classId,
     AddressId: addressId,
     has_baptism: has_baptism ?? false,
