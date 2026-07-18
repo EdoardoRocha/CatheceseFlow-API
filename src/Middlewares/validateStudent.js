@@ -1,9 +1,50 @@
 import { Op } from "sequelize";
 import Class from "../Models/Class.js";
 import Student from "../Models/Students.js";
+import User from "../Models/Users.js";
 
 const MAX_PHONES = 5;
 const MAX_PHONE_LENGTH = 20;
+const ALLOWED_CATEQUISTA_ROLES = ["Catequista", "Coordenador"];
+
+async function validateResponsibleCatequista(userId, parishId, res) {
+  if (userId == null || userId === "") {
+    res.status(400).json({
+      message: "O catequista responsável é obrigatório.",
+    });
+    return false;
+  }
+
+  const id = Number(userId);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ message: "Catequista responsável inválido." });
+    return false;
+  }
+
+  const catequista = await User.findByPk(id);
+  if (!catequista) {
+    res.status(422).json({ message: "Catequista responsável inexistente." });
+    return false;
+  }
+
+  if (catequista.ParishId !== parishId) {
+    res.status(403).json({
+      message:
+        "Você não tem permissão para associar um catequista de outra paróquia.",
+    });
+    return false;
+  }
+
+  if (!ALLOWED_CATEQUISTA_ROLES.includes(catequista.role)) {
+    res.status(400).json({
+      message:
+        "O responsável deve ser um usuário com perfil Catequista ou Coordenador.",
+    });
+    return false;
+  }
+
+  return true;
+}
 
 function validateName(name, res) {
   if (!name || !String(name).trim()) {
@@ -77,7 +118,7 @@ async function loadStudentForParish(studentId, parishId, res) {
 }
 
 const validateNewStudent = async (req, res, next) => {
-  const { name, cpf, classId, birth_date, phones } = req.body;
+  const { name, cpf, classId, birth_date, phones, userId } = req.body;
 
   if (!validateName(name, res)) return;
   if (!classId)
@@ -111,11 +152,13 @@ const validateNewStudent = async (req, res, next) => {
         "Você não tem permissão para adicionar um estudante a essa turma.",
     });
 
+  if (!(await validateResponsibleCatequista(userId, parishId, res))) return;
+
   next();
 };
 
 const validateUpdateStudent = async (req, res, next) => {
-  const { name, cpf, birth_date, phones } = req.body;
+  const { name, cpf, birth_date, phones, userId } = req.body;
   const { studentId } = req.params;
 
   if (!validateName(name, res)) return;
@@ -143,6 +186,9 @@ const validateUpdateStudent = async (req, res, next) => {
         .status(409)
         .json({ message: "Esse estudante já existe nesta turma!" });
   }
+
+  if (!(await validateResponsibleCatequista(userId, req.user.ParishId, res)))
+    return;
 
   req.student = student;
   next();

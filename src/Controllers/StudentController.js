@@ -2,6 +2,13 @@ import Student from "../Models/Students.js";
 import StudentPhone from "../Models/StudentPhones.js";
 import Address from "../Models/Address.js";
 import Class from "../Models/Class.js";
+import User from "../Models/Users.js";
+
+const catequistaInclude = {
+  model: User,
+  as: "catequista",
+  attributes: ["id", "name", "role"],
+};
 
 function trimOrNull(value) {
   if (value == null) return null;
@@ -76,6 +83,13 @@ function mapStudentResponse(student) {
   const plain = student.toJSON ? student.toJSON() : student;
   const phones = resolveStudentPhones(plain);
   const addressFields = extractAddressFields(plain);
+  const catequista = plain.catequista ?? null;
+  const userId =
+    plain.UserId != null
+      ? Number(plain.UserId)
+      : catequista?.id != null
+        ? Number(catequista.id)
+        : null;
 
   return {
     ...plain,
@@ -84,6 +98,14 @@ function mapStudentResponse(student) {
     phone: phones[0]?.number ?? null,
     phoneSummary: formatPhoneSummary(phones),
     address: addressFields,
+    userId,
+    catequista: catequista
+      ? {
+          id: Number(catequista.id),
+          name: catequista.name,
+          role: catequista.role,
+        }
+      : null,
   };
 }
 
@@ -148,6 +170,7 @@ async function findStudentWithDetails(studentId) {
       { model: StudentPhone, as: "phones" },
       { model: Address },
       { model: Class, attributes: ["id", "ParishId"] },
+      catequistaInclude,
     ],
   });
 }
@@ -182,6 +205,7 @@ function buildStudentPayload(body, classId, addressId) {
     father_name,
     mother_name,
     description,
+    userId,
   } = body;
 
   return {
@@ -194,6 +218,7 @@ function buildStudentPayload(body, classId, addressId) {
     description: trimOrNull(description),
     ClassId: classId,
     AddressId: addressId,
+    UserId: Number(userId),
     has_baptism: has_baptism ?? false,
     has_first_communion: has_first_communion ?? false,
   };
@@ -302,7 +327,10 @@ export default class StudentController {
     try {
       const students = await Student.findAll({
         where: { ClassId: id },
-        include: [{ model: StudentPhone, as: "phones" }],
+        include: [
+          { model: StudentPhone, as: "phones" },
+          catequistaInclude,
+        ],
       });
 
       res.status(200).json(students.map(mapStudentResponse));
@@ -318,7 +346,10 @@ export default class StudentController {
     try {
       const students = await Student.findAll({
         where: { ClassId: classId },
-        include: [{ model: StudentPhone, as: "phones" }],
+        include: [
+          { model: StudentPhone, as: "phones" },
+          catequistaInclude,
+        ],
       });
 
       const baptismPending = students.filter((s) => !s.has_baptism);

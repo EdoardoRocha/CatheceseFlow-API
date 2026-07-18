@@ -39,6 +39,9 @@ Student.hasMany(Absence);
 Student.belongsTo(Class);
 Class.hasMany(Student);
 
+Student.belongsTo(User, { as: "catequista", foreignKey: "UserId" });
+User.hasMany(Student, { as: "students", foreignKey: "UserId" });
+
 Student.hasMany(StudentPhone, { as: "phones", foreignKey: "StudentId" });
 StudentPhone.belongsTo(Student, { foreignKey: "StudentId" });
 
